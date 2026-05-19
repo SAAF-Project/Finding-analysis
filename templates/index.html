@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multimodal Audit Intelligence Agent</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-title">
+      <span class="header-icon">🔍</span>
+      <div>
+        <h1>Multimodal Audit Intelligence Agent</h1>
+        <p class="header-sub">GIAS 13.2 Compliant · Historical Risk Analysis · Claude AI Powered</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ═══ UPLOAD SECTIE ══════════════════════════════════════════════ -->
+  <section id="upload-section" class="card">
+
+    <!-- ── Sectie 1: Document bronnen ── -->
+    <h2 class="section-title">1. Audit Documenten</h2>
+
+    <div class="source-tabs">
+      <button class="tab-btn tab-active" data-tab="local">📁 Lokale bestanden</button>
+      <button class="tab-btn" data-tab="sharepoint">🔗 SharePoint map</button>
+    </div>
+
+    <!-- Tab: Lokale bestanden -->
+    <div id="tab-local" class="tab-panel">
+      <div class="drop-zone" id="drop-zone">
+        <div class="drop-icon">📁</div>
+        <p class="drop-main">Sleep bestanden hiernaartoe of <span class="link">klik om te selecteren</span></p>
+        <p class="drop-hint">PDF, PPTX, XLSX, DOCX, PNG, JPG, WebP — max 200 MB totaal</p>
+        <input type="file" id="file-input" multiple
+               accept=".pdf,.pptx,.xlsx,.xls,.docx,.png,.jpg,.jpeg,.gif,.webp">
+      </div>
+      <div id="file-list" class="file-list"></div>
+    </div>
+
+    <!-- Tab: SharePoint -->
+    <div id="tab-sharepoint" class="tab-panel hidden">
+      <div class="sp-form">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="sp-site-url">SharePoint Site URL</label>
+            <input type="url" id="sp-site-url" class="input-field"
+                   placeholder="https://bedrijf.sharepoint.com/sites/audit">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="sp-folder">Mappad (server-relatief)</label>
+            <input type="text" id="sp-folder" class="input-field"
+                   placeholder="/sites/audit/Gedeelde documenten/2024 Audit">
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="sp-username">Gebruikersnaam</label>
+            <input type="email" id="sp-username" class="input-field"
+                   placeholder="gebruiker@bedrijf.onmicrosoft.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="sp-password">Wachtwoord</label>
+            <input type="password" id="sp-password" class="input-field"
+                   placeholder="SharePoint wachtwoord">
+          </div>
+        </div>
+        <p class="form-hint sp-note">
+          ℹ Credentials worden alleen voor deze sessie gebruikt en niet opgeslagen.
+          Voor organisaties met MFA: gebruik een app-wachtwoord of service-account.
+          Je kunt ook lokale bestanden uploaden én SharePoint combineren.
+        </p>
+        <div id="sp-status" class="sp-status hidden"></div>
+      </div>
+    </div>
+
+    <!-- ── Sectie 2: Analyse-context ── -->
+    <div class="divider"></div>
+    <h2 class="section-title">2. Analyse-context <span class="optional-tag">optioneel</span></h2>
+    <p class="section-desc">
+      Vul één of beide velden in om de analyse te sturen. Je hoeft niet allebei te gebruiken.
+    </p>
+
+    <!-- Opdrachtbrief -->
+    <details class="optional-section" id="el-section">
+      <summary>
+        <span class="opt-icon">📋</span>
+        Opdrachtbrief uploaden
+        <span class="opt-hint">— Claude gebruikt de scope van de opdracht als analysekader</span>
+      </summary>
+      <div class="optional-body">
+        <div class="el-drop-zone" id="el-drop-zone">
+          <span class="el-icon">📋</span>
+          <span class="el-main">Sleep de opdrachtbrief hier of <span class="link">klik om te selecteren</span></span>
+          <span class="el-hint">PDF of DOCX</span>
+          <input type="file" id="engagement-input" accept=".pdf,.docx">
+        </div>
+        <div id="engagement-filename" class="file-item hidden" style="margin-top:8px">
+          <span class="file-icon">📋</span>
+          <span class="file-name" id="engagement-name"></span>
+          <button class="file-remove" id="engagement-remove" title="Verwijder">✕</button>
+        </div>
+        <p class="form-hint">
+          De tekst van de opdrachtbrief wordt als primaire lens gebruikt. Bevindingen buiten
+          de scope worden als zodanig gelabeld.
+        </p>
+      </div>
+    </details>
+
+    <!-- Zoektermen -->
+    <details class="optional-section" id="kw-section">
+      <summary>
+        <span class="opt-icon">🔎</span>
+        Zoektermen / focusgebieden opgeven
+        <span class="opt-hint">— Claude besteedt extra aandacht aan deze onderwerpen</span>
+      </summary>
+      <div class="optional-body">
+        <textarea id="keywords" class="input-field textarea-field" rows="3"
+                  placeholder="bijv. toegangsbeheer, functiescheiding, SAP autorisaties, GDPR, 2024 reorganisatie, inkooprisico's..."></textarea>
+        <p class="form-hint">
+          Vrije tekst. Komma's of enters als scheidingsteken. Je kunt dit gebruiken
+          zonder opdrachtbrief, of in combinatie ermee.
+        </p>
+      </div>
+    </details>
+
+    <!-- ── Sectie 3: Instellingen ── -->
+    <div class="divider"></div>
+    <h2 class="section-title">3. Instellingen</h2>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="lookback-years">
+          Kijktermijn: <strong id="years-display">3</strong> jaar
+        </label>
+        <input type="range" id="lookback-years" min="1" max="10" value="3" class="slider">
+        <div class="slider-labels"><span>1 jaar</span><span>5 jaar</span><span>10 jaar</span></div>
+        <div class="temporal-legend">
+          <span class="badge badge-high">0–2 jr: Hoog gewicht</span>
+          <span class="badge badge-mid">3–5 jr: Middel</span>
+          <span class="badge badge-low">6–10 jr: Laag</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="api-key">Claude API Key</label>
+        <div class="input-wrap">
+          <input type="password" id="api-key" class="input-field"
+                 placeholder="sk-ant-api03-..."
+                 value="{{ default_api_key }}">
+          <button class="eye-btn" id="toggle-key" title="Toon/verberg key">👁</button>
+        </div>
+        <p class="form-hint">Je API key wordt niet opgeslagen op de server.</p>
+      </div>
+    </div>
+
+    <button id="analyze-btn" class="btn btn-primary" disabled>
+      <span class="btn-icon">🚀</span> Analyse Starten
+    </button>
+  </section>
+
+  <!-- ═══ VOORTGANG SECTIE ════════════════════════════════════════════ -->
+  <section id="progress-section" class="card hidden">
+    <h2 class="section-title">Analyse in Uitvoering</h2>
+
+    <div id="progress-steps" class="progress-steps"></div>
+
+    <div id="thinking-box" class="thinking-box hidden">
+      <div class="thinking-header">
+        <span class="pulse-dot"></span>
+        <strong>Claude analyseert diepgaand (extended thinking)...</strong>
+      </div>
+      <div id="thinking-text" class="thinking-text"></div>
+    </div>
+
+    <div id="stream-box" class="stream-box hidden">
+      <div class="stream-header">
+        <span>📝 Rapport wordt gegenereerd</span>
+        <span id="token-count" class="token-count">0 tokens</span>
+      </div>
+      <div id="stream-text" class="stream-text"></div>
+    </div>
+  </section>
+
+  <!-- ═══ RAPPORT SECTIE ══════════════════════════════════════════════ -->
+  <section id="report-section" class="card hidden">
+    <div class="report-header">
+      <h2 class="section-title" style="margin:0">Bevindingenoverzicht</h2>
+      <div class="download-group">
+        <button id="download-html" class="btn btn-outline">⬇ HTML</button>
+        <button id="download-docx" class="btn btn-outline">⬇ Word (.docx)</button>
+        <button id="download-pdf" class="btn btn-outline">⬇ PDF</button>
+        <button id="new-analysis" class="btn btn-secondary">🔄 Nieuwe analyse</button>
+      </div>
+    </div>
+    <div id="report-content" class="report-content"></div>
+  </section>
+
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Historical Risk Intelligence Report</title>
+<style>
+  :root {
+    --blue-900: #1e3a5f; --blue-700: #1d4ed8; --blue-100: #dbeafe;
+    --red:    #ef4444; --red-bg:    #fef2f2;
+    --amber:  #f59e0b; --amber-bg:  #fffbeb;
+    --green:  #10b981; --green-bg:  #ecfdf5;
+    --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+    --gray-600: #475569; --gray-800: #1e293b;
+    --radius: 8px; --shadow: 0 1px 3px rgba(0,0,0,.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px;
+         color: var(--gray-800); background: #fff; line-height: 1.6; }
+  a { color: var(--blue-700); }
+
+  /* ── Layout ── */
+  .page-wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px 48px; }
+
+  /* ── Header ── */
+  .report-header {
+    background: linear-gradient(135deg, var(--blue-900) 0%, #1d4ed8 100%);
+    color: #fff; padding: 36px 40px; margin-bottom: 32px;
+  }
+  .report-header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .report-header .meta { margin-top: 10px; opacity: .85; font-size: 13px; }
+  .report-header .meta span { margin-right: 24px; }
+
+  /* ── Assessment badge ── */
+  .assessment-badge {
+    display: inline-block; margin-top: 12px;
+    padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
+  .badge-update  { background: rgba(16,185,129,.25); color: #6ee7b7; }
+  .badge-full    { background: rgba(239,68,68,.25);  color: #fca5a5; }
+
+  /* ── Section ── */
+  .section { margin-bottom: 32px; }
+  .section-title {
+    font-size: 17px; font-weight: 700; color: var(--blue-900);
+    border-left: 4px solid var(--blue-700); padding-left: 12px;
+    margin-bottom: 16px;
+  }
+  .card {
+    background: #fff; border: 1px solid var(--gray-200);
+    border-radius: var(--radius); padding: 20px 24px;
+    box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+
+  /* ── GIAS Validatie ── */
+  .gias-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .gias-item label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+                     color: var(--gray-600); display: block; margin-bottom: 2px; }
+  .gias-item p { font-size: 14px; }
+
+  /* ── Risk table ── */
+  .risk-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .risk-table th {
+    background: var(--gray-100); text-align: left; padding: 8px 12px;
+    font-size: 12px; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--gray-600); border-bottom: 2px solid var(--gray-200);
+  }
+  .risk-table td { padding: 10px 12px; border-bottom: 1px solid var(--gray-100); vertical-align: top; }
+  .risk-table tr:hover td { background: var(--gray-50); }
+
+  .rel-high { color: var(--red);   font-weight: 700; }
+  .rel-mid  { color: var(--amber); font-weight: 700; }
+  .rel-low  { color: var(--green); font-weight: 700; }
+
+  .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .score-bar { height: 6px; border-radius: 3px; min-width: 4px; }
+  .score-num { font-size: 12px; color: var(--gray-600); }
+
+  .status-badge {
+    display: inline-block; padding: 2px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 600;
+  }
+  .status-Chronisch  { background: #fce7f3; color: #be185d; }
+  .status-Verslechterd { background: var(--red-bg);   color: var(--red); }
+  .status-Stabiel    { background: var(--amber-bg); color: #b45309; }
+  .status-Verbeterd  { background: var(--green-bg); color: #065f46; }
+
+  .sources { font-size: 11px; color: var(--blue-700); margin-top: 4px; }
+
+  /* ── Focus Areas ── */
+  .focus-item { padding: 16px 20px; border-left: 3px solid var(--blue-700);
+                background: var(--blue-100); border-radius: 0 var(--radius) var(--radius) 0;
+                margin-bottom: 12px; }
+  .focus-rank { font-size: 11px; font-weight: 700; text-transform: uppercase;
+                color: var(--blue-700); margin-bottom: 4px; }
+  .focus-area-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .focus-reason { color: var(--gray-600); margin-bottom: 10px; font-size: 13px; }
+  .test-list { list-style: none; padding: 0; }
+  .test-list li { padding: 3px 0 3px 20px; position: relative; font-size: 13px; }
+  .test-list li::before { content: '✓'; position: absolute; left: 0; color: var(--green); }
+
+  /* ── Inconsistencies ── */
+  .inc-item { padding: 14px 16px; border-radius: var(--radius); margin-bottom: 10px; }
+  .inc-Hoog  { background: var(--red-bg);   border-left: 3px solid var(--red); }
+  .inc-Middel{ background: var(--amber-bg); border-left: 3px solid var(--amber); }
+  .inc-Laag  { background: var(--green-bg); border-left: 3px solid var(--green); }
+  .inc-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .sev-badge { font-size: 11px; font-weight: 700; padding: 2px 8px;
+               border-radius: 10px; }
+  .sev-Hoog   { background: var(--red);   color: #fff; }
+  .sev-Middel { background: var(--amber); color: #fff; }
+  .sev-Laag   { background: var(--green); color: #fff; }
+  .inc-files { font-size: 11px; color: var(--gray-600); margin: 4px 0; }
+  .inc-lesson { font-size: 13px; font-style: italic; color: var(--gray-600); margin-top: 6px; }
+  .inc-lesson::before { content: '💡 '; }
+
+  /* ── Red Thread ── */
+  .rt-item { padding: 12px 16px; background: #fdf2f8;
+             border-left: 3px solid #ec4899; border-radius: 0 var(--radius) var(--radius) 0;
+             margin-bottom: 10px; }
+  .rt-issue { font-weight: 700; margin-bottom: 6px; }
+  .rt-meta  { font-size: 12px; color: var(--gray-600); display: grid;
+              grid-template-columns: 1fr 1fr; gap: 4px; }
+
+  /* ── Timeline ── */
+  .timeline { display: flex; flex-direction: column; gap: 8px; }
+  .tl-item { display: flex; gap: 16px; align-items: flex-start; }
+  .tl-year { width: 60px; font-weight: 700; font-size: 15px; flex-shrink: 0; padding-top: 2px; }
+  .tl-connector { display: flex; flex-direction: column; align-items: center; }
+  .tl-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+  .tl-line { width: 2px; flex: 1; min-height: 20px; background: var(--gray-200); }
+  .tl-content { flex: 1; padding-bottom: 12px; }
+  .tl-status { font-size: 11px; font-weight: 700; margin-bottom: 2px; }
+  .tl-events { font-size: 13px; color: var(--gray-600); }
+  .tl-Rood  .tl-dot { background: var(--red); }
+  .tl-Amber .tl-dot { background: var(--amber); }
+  .tl-Groen .tl-dot { background: var(--green); }
+  .tl-Rood  .tl-status { color: var(--red); }
+  .tl-Amber .tl-status { color: #b45309; }
+  .tl-Groen .tl-status { color: #065f46; }
+
+  /* ── Visual Insights ── */
+  .vi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .vi-item label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+                   color: var(--gray-600); display: block; margin-bottom: 4px; }
+
+  /* ── Footer ── */
+  .report-footer {
+    margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--gray-200);
+    text-align: center; font-size: 12px; color: var(--gray-600);
+  }
+
+  @media print {
+    .report-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="report-header">
+  <h1>Historical Risk Intelligence Report</h1>
+  <div class="meta">
+    <span>📅 Gegenereerd: {{ generated_at }}</span>
+    <span>🔭 Kijktermijn: {{ report.metadata.lookback_years }} jaar</span>
+    <span>📂 Bestanden geanalyseerd: {{ report.metadata.files_analyzed }}</span>
+  </div>
+  {% if report.gias_validation %}
+  <div class="assessment-badge {% if 'Update' in report.gias_validation.assessment_type %}badge-update{% else %}badge-full{% endif %}">
+    {{ report.gias_validation.assessment_type }}
+  </div>
+  {% endif %}
+</div>
+
+<div class="page-wrap">
+
+  <!-- ── 1. GIAS 13.2 Validatie ── -->
+  {% if report.gias_validation %}
+  <div class="section">
+    <h2 class="section-title">1. GIAS 13.2 Validatie</h2>
+    <div class="card">
+      <div class="gias-grid">
+        <div class="gias-item">
+          <label>Assessment Type</label>
+          <p><strong>{{ report.gias_validation.assessment_type }}</strong></p>
+        </div>
+        {% if report.gias_validation.prior_engagement %}
+        <div class="gias-item">
+          <label>Vorige Engagement</label>
+          <p>{{ report.gias_validation.prior_engagement }}</p>
+        </div>
+        {% endif %}
+        <div class="gias-item" style="grid-column: 1 / -1">
+          <label>Onderbouwing</label>
+          <p>{{ report.gias_validation.rationale }}</p>
+        </div>
+        {% if report.gias_validation.recommendation %}
+        <div class="gias-item" style="grid-column: 1 / -1">
+          <label>Aanbeveling</label>
+          <p><strong>{{ report.gias_validation.recommendation }}</strong></p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── 2. Risk Evolution Matrix ── -->
+  {% if report.risk_evolution %}
+  <div class="section">
+    <h2 class="section-title">2. Risk Evolution Matrix</h2>
+    <div class="card" style="padding: 0; overflow:hidden">
+      <table class="risk-table">
+        <thead>
+          <tr>
+            <th>Risico-thema</th>
+            <th>Historische Status</th>
+            <th>Score</th>
+            <th>Relevantie</th>
+            <th>Bewijs & Bronnen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for risk in report.risk_evolution %}
+          <tr>
+            <td><strong>{{ risk.risk_theme }}</strong></td>
+            <td>
+              <span class="status-badge status-{{ risk.historical_status | replace(' ', '') }}">
+                {{ risk.historical_status }}
+              </span>
+            </td>
+            <td>
+              <div class="score-bar-wrap">
+                <div class="score-bar"
+                     style="width: {{ risk.relevance_score }}px; max-width: 80px;
+                            background: {% if risk.relevance_score >= 70 %}#ef4444{% elif risk.relevance_score >= 40 %}#f59e0b{% else %}#10b981{% endif %}">
+                </div>
+                <span class="score-num">{{ risk.relevance_score }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="{% if risk.current_relevance == 'Hoog' %}rel-high{% elif risk.current_relevance == 'Middel' %}rel-mid{% else %}rel-low{% endif %}">
+                {{ risk.current_relevance }}
+              </span>
+            </td>
+            <td>
+              {{ risk.evidence }}
+              {% if risk.sources %}
+              <div class="sources">
+                {% for src in risk.sources %}📎 {{ src }}{% if not loop.last %} · {% endif %}{% endfor %}
+              </div>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── 3. Deep-Dive Focusgebieden ── -->
+  {% if report.focus_areas %}
+  <div class="section">
+    <h2 class="section-title">3. Deep-Dive Focusgebieden</h2>
+    {% for area in report.focus_areas %}
+    <div class="focus-item">
+      <div class="focus-rank">Prioriteit {{ area.rank }}</div>
+      <div class="focus-area-title">{{ area.area }}</div>
+      <div class="focus-reason">{{ area.reason }}</div>
+      {% if area.key_tests %}
+      <ul class="test-list">
+        {% for test in area.key_tests %}<li>{{ test }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── 4. Inconsistenties & Lessons Learned ── -->
+  {% if report.inconsistencies %}
+  <div class="section">
+    <h2 class="section-title">4. Inconsistenties &amp; Lessons Learned</h2>
+    {% for inc in report.inconsistencies %}
+    <div class="inc-item inc-{{ inc.severity }}">
+      <div class="inc-header">
+        <span class="sev-badge sev-{{ inc.severity }}">{{ inc.severity }}</span>
+        <strong>{{ inc.description }}</strong>
+      </div>
+      {% if inc.files_involved %}
+      <div class="inc-files">Betrokken: {{ inc.files_involved | join(' · ') }}</div>
+      {% endif %}
+      {% if inc.lesson %}
+      <div class="inc-lesson">{{ inc.lesson }}</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── 5. Red Thread Analyse ── -->
+  {% if report.red_thread %}
+  <div class="section">
+    <h2 class="section-title">5. Red Thread Analyse</h2>
+    {% for item in report.red_thread %}
+    <div class="rt-item">
+      <div class="rt-issue">🔴 {{ item.issue }}</div>
+      <div class="rt-meta">
+        <div><strong>Verschijningen:</strong> {{ item.appearances }}</div>
+        <div><strong>Sluitingen:</strong> {{ item.closures }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── 6. Tijdlijn ── -->
+  {% if report.timeline %}
+  <div class="section">
+    <h2 class="section-title">6. Tijdlijn</h2>
+    <div class="card">
+      <div class="timeline">
+        {% for entry in report.timeline | sort(attribute='year', reverse=True) %}
+        <div class="tl-item tl-{{ entry.status }}">
+          <div class="tl-year">{{ entry.year }}</div>
+          <div class="tl-connector">
+            <div class="tl-dot"></div>
+            {% if not loop.last %}<div class="tl-line"></div>{% endif %}
+          </div>
+          <div class="tl-content">
+            <div class="tl-status">{{ entry.status }}</div>
+            <div class="tl-events">{{ entry.key_events }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── 7. Visuele & Systemische Inzichten ── -->
+  {% if report.visual_insights %}
+  {% set vi = report.visual_insights %}
+  {% if vi.process_drift or vi.remediation_integrity %}
+  <div class="section">
+    <h2 class="section-title">7. Visuele &amp; Systemische Inzichten</h2>
+    <div class="card">
+      <div class="vi-grid">
+        {% if vi.process_drift %}
+        <div class="vi-item">
+          <label>Procesdrift</label>
+          <p>{{ vi.process_drift }}</p>
+        </div>
+        {% endif %}
+        {% if vi.remediation_integrity %}
+        <div class="vi-item">
+          <label>Remediatie-integriteit</label>
+          <p>{{ vi.remediation_integrity }}</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <!-- ── 8. Dekkingsbeoordeling ── -->
+  {% if report.metadata.coverage_assessment %}
+  <div class="section">
+    <h2 class="section-title">8. Dekkingsbeoordeling</h2>
+    <div class="card">{{ report.metadata.coverage_assessment }}</div>
+  </div>
+  {% endif %}
+
+  <div class="report-footer">
+    Gegenereerd door Multimodal Audit Intelligence Agent op {{ generated_at }} ·
+    Model: Claude Opus 4.6 · GIAS 13.2 Compliant
+  </div>
+
+</div>
+</body>
+</html>
