@@ -7,3 +7,6 @@ build/
 venv/
 .env
 uploads/
+evals/__init__.py
+evals/runs/
+evals/results/
